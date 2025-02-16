@@ -21,19 +21,19 @@ def create_agent_chain():
         temperature=float(os.getenv("OPENAI_API_TEMPERATURE", 0.5)),
         max_tokens=500
     )
-    
+
     # 🔧 도구 로드
     tools = load_tools(["ddg-search", "wikipedia"])
-    
+
     # 🔧 프롬프트 로드
     prompt = hub.pull("hwchase17/openai-tools-agent")
-    
+
     # 🛠️ Agent 생성
     agent = create_openai_tools_agent(chat, tools, prompt)
-    
+
     # 🚀 Agent Executor 생성
     return AgentExecutor.from_agent_and_tools(
-        agent=agent, 
+        agent=agent,
         tools=tools,
         verbose=True
     )
@@ -65,9 +65,7 @@ if prompt:
         agent_chain = create_agent_chain()
 
         try:
-            response = agent_chain.invoke(
-                {"input": prompt, "callbacks": [callback]}
-            )
+            response = agent_chain.invoke({"input": prompt})
             output = response.get("output", "No response generated.")
             history.add_ai_message(output)
             st.markdown(output)
