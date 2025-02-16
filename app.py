@@ -1,4 +1,4 @@
-# app.py - Streamlit + LangChain 예제 with Chat History 표시
+# app.py - Streamlit + LangChain 예제 with Chat History
 import os
 import streamlit as st
 from dotenv import load_dotenv
