@@ -1,4 +1,4 @@
-# app.py - Streamlit + LangChain 예제 with Agent (중복 출력 해결)
+# app.py - Streamlit + LangChain 예제 with Chat History 표시
 import os
 import streamlit as st
 from dotenv import load_dotenv
@@ -17,7 +17,7 @@ from langchain.memory import ConversationBufferMemory
 # 📌 환경 변수 로드
 load_dotenv()
 
-# 📌 Agent 생성 함수 수정
+# 📌 Agent 생성 함수
 def create_agent_chain(history):
     chat = ChatOpenAI(
         model_name=os.getenv("OPENAI_API_MODEL", "gpt-3.5-turbo"),
@@ -31,12 +31,12 @@ def create_agent_chain(history):
     # 🔧 프롬프트 로드
     prompt = hub.pull("hwchase17/openai-tools-agent")
 
-    # 📌 ConversationBufferMemory (Output 제외 설정)
+    # 📝 ConversationBufferMemory 초기화 (대화 기록 저장)
     memory = ConversationBufferMemory(
         chat_memory=history,
         memory_key='chat_history',
         return_messages=True,
-        output_key=None  # 출력 중복 방지
+        output_key=None
     )
 
     # 🛠️ Agent 생성
@@ -48,7 +48,7 @@ def create_agent_chain(history):
         tools=tools,
         memory=memory,
         verbose=True,
-        return_intermediate_steps=False  # 중간 단계 출력 방지
+        return_intermediate_steps=False
     )
 
 # 📌 Streamlit 제목 및 설명
@@ -58,14 +58,14 @@ st.write("LangChain Agents를 활용한 Streamlit 챗봇입니다. 🎉")
 # 📌 Chat History 초기화
 history = StreamlitChatMessageHistory()
 
-# 🔁 이전 메시지 표시 (Streamlit만 출력)
+# 📝 🔁 대화 히스토리 전체 출력 (Streamlit UI)
+st.subheader("💬 대화 히스토리")
 for message in history.messages:
     if message.type == "user":
-        with st.chat_message("user"):
-            st.markdown(message.content)
+        st.markdown(f"👤 **사용자:** {message.content}")
     elif message.type == "assistant":
-        with st.chat_message("assistant"):
-            st.markdown(message.content)
+        st.markdown(f"🤖 **AI:** {message.content}")
+st.divider()  # 구분선 추가
 
 # 🟡 사용자 입력 처리
 prompt = st.chat_input("What's up?")
@@ -84,9 +84,19 @@ if prompt:
         try:
             response = agent_chain.invoke({"input": prompt})
             output = response.get("output", "No response generated.")
-            
-            # Streamlit에만 출력
+
+            # 대화 기록에 추가
             history.add_ai_message(output)
             st.markdown(output)
+
+            # 🔄 대화 히스토리 즉시 업데이트
+            st.subheader("💬 업데이트된 대화 히스토리")
+            for message in history.messages:
+                if message.type == "user":
+                    st.markdown(f"👤 **사용자:** {message.content}")
+                elif message.type == "assistant":
+                    st.markdown(f"🤖 **AI:** {message.content}")
+            st.divider()
+
         except Exception as e:
             st.error(f"오류 발생: {e}")
