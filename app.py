@@ -60,14 +60,14 @@ st.title("🚀 AWS EC2 + LangChain Agent Chatbot")
 st.write("LangChain Agents를 활용한 Streamlit 챗봇입니다. 🎉")
 
 # 💬 전체 대화 히스토리 출력 (중복 없이 전체 기록 표시)
-st.subheader("💬 대화 히스토리")
-for message in st.session_state.chat_history.messages:
-    if isinstance(message, HumanMessage):
-        with st.chat_message("user"):
-            st.markdown(message.content)
-    elif isinstance(message, AIMessage):
-        with st.chat_message("assistant"):
-            st.markdown(message.content)
+# st.subheader("💬 대화 히스토리")
+# for message in st.session_state.chat_history.messages:
+#     if isinstance(message, HumanMessage):
+#         with st.chat_message("user"):
+#             st.markdown(message.content)
+#     elif isinstance(message, AIMessage):
+#         with st.chat_message("assistant"):
+#             st.markdown(message.content)
 
 # 🟡 사용자 입력 처리
 prompt = st.chat_input("What's up?")
