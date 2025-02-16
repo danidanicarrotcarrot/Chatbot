@@ -1,4 +1,4 @@
-# app.py - Streamlit + LangChain 예제 (중복 출력 해결, 전체 대화 제거)
+# app.py - Streamlit + LangChain 예제 (중복 출력 해결 및 전체 대화 출력)
 import os
 import streamlit as st
 from dotenv import load_dotenv
@@ -20,8 +20,6 @@ load_dotenv()
 # 📌 세션 상태 초기화
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = StreamlitChatMessageHistory()
-if "last_message_index" not in st.session_state:
-    st.session_state.last_message_index = 0  # 마지막으로 출력된 메시지 인덱스
 
 # 📌 Agent 생성 함수
 def create_agent_chain(history):
@@ -61,9 +59,9 @@ def create_agent_chain(history):
 st.title("🚀 AWS EC2 + LangChain Agent Chatbot")
 st.write("LangChain Agents를 활용한 Streamlit 챗봇입니다. 🎉")
 
-# 💬 이전 대화 히스토리 출력 (마지막 입력 이후만 출력)
-st.subheader("💬 이전 대화 히스토리")
-for message in st.session_state.chat_history.messages[st.session_state.last_message_index:]:
+# 💬 전체 대화 히스토리 출력 (중복 없이 전체 기록 표시)
+st.subheader("💬 대화 히스토리")
+for message in st.session_state.chat_history.messages:
     if isinstance(message, HumanMessage):
         with st.chat_message("user"):
             st.markdown(message.content)
@@ -75,11 +73,11 @@ for message in st.session_state.chat_history.messages[st.session_state.last_mess
 prompt = st.chat_input("What's up?")
 
 if prompt:
-    # 🗨️ 사용자 메시지 즉시 출력
+    # 🗨️ 사용자 메시지 즉시 출력 (화면에만 표시)
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # 🤖 AI 응답 생성 및 출력
+    # 🤖 AI 응답 생성 및 출력 (화면에만 표시)
     with st.chat_message("assistant"):
         callback = StreamlitCallbackHandler(st.container())  # 콜백 핸들러 추가
         agent_chain = create_agent_chain(st.session_state.chat_history)
@@ -88,15 +86,12 @@ if prompt:
             response = agent_chain.invoke({"input": prompt})
             output = response.get("output", "No response generated.")
 
-            # 💾 메시지 기록은 화면 출력 후 업데이트 (중복 방지)
+            # 💾 대화 히스토리 업데이트 (세션에만 저장, 중복 방지)
             st.session_state.chat_history.add_user_message(prompt)
             st.session_state.chat_history.add_ai_message(output)
 
             # AI 응답 즉시 표시
             st.markdown(output)
-
-            # 🟡 마지막 출력된 메시지 인덱스 업데이트
-            st.session_state.last_message_index = len(st.session_state.chat_history.messages)
 
         except Exception as e:
             st.error(f"오류 발생: {e}")
