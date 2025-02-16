@@ -1,6 +1,11 @@
 # app.py - Streamlit + LangChain 예제
 import streamlit as st
+from dotenv import load_dotenv
 from langchain_community.chat_message_histories import StreamlitChatMessageHistory
+from langchain_openai import ChatOpenAI
+from langchain.schema import HumanMessage
+
+load_dotenv()
 
 # 제목 및 설명
 st.title("🚀 Hello, AWS EC2 from Streamlit with LangChain!")
@@ -25,6 +30,11 @@ if prompt:
 
     # AI 응답 출력
     with st.chat_message("assistant"):
-        response = "안녕하세요! 😊 반갑습니다!"
+        chat = ChatOpenAI(
+            model_name=os.environ["OPENAI_API_MODEL"],
+            temperature=os.environ["OPENAI_API_TEMPERATURE"],
+        )
+        messages = [HumanMessage(content=prompt)]
+        response = chat.invoke(messages)
         history.add_ai_message(response)
-        st.markdown(response)
+        st.markdown(response.content)
