@@ -11,11 +11,14 @@ from langchain import hub
 from langchain.agents import AgentExecutor, create_openai_tools_agent, load_tools
 from langchain_community.callbacks import StreamlitCallbackHandler
 
+# Memory 관련 모듈
+from langchain.memory import ConversationBufferMemory
+
 # 📌 환경 변수 로드
 load_dotenv()
 
-# 📌 Agent 생성 함수
-def create_agent_chain():
+# 📌 Agent 생성 함수 수정
+def create_agent_chain(history):
     chat = ChatOpenAI(
         model_name=os.getenv("OPENAI_API_MODEL", "gpt-3.5-turbo"),
         temperature=float(os.getenv("OPENAI_API_TEMPERATURE", 0.5)),
@@ -28,6 +31,11 @@ def create_agent_chain():
     # 🔧 프롬프트 로드
     prompt = hub.pull("hwchase17/openai-tools-agent")
 
+    # OpenAI Functions Agent가 사용할 수 있는 설정으로 Memory 초기화
+    memory = ConversationBufferMemory(
+        chat_memory=history, memory_key='chat_history', return_messages=True
+        )
+
     # 🛠️ Agent 생성
     agent = create_openai_tools_agent(chat, tools, prompt)
 
@@ -35,6 +43,7 @@ def create_agent_chain():
     return AgentExecutor.from_agent_and_tools(
         agent=agent,
         tools=tools,
+        memory=memory,
         verbose=True
     )
 
@@ -62,7 +71,7 @@ if prompt:
     # 🤖 AI 응답 출력
     with st.chat_message("assistant"):
         callback = StreamlitCallbackHandler(st.container())  # 콜백 핸들러 추가
-        agent_chain = create_agent_chain()
+        agent_chain = create_agent_chain(history)
 
         try:
             response = agent_chain.invoke({"input": prompt})
