@@ -1,4 +1,4 @@
-# app.py - Streamlit + LangChain 예제 (중복 출력 해결)
+# app.py - Streamlit + LangChain 예제 (중복 출력 해결, 전체 대화 제거)
 import os
 import streamlit as st
 from dotenv import load_dotenv
@@ -17,11 +17,11 @@ from langchain.memory import ConversationBufferMemory
 # 📌 환경 변수 로드
 load_dotenv()
 
-# 📌 대화 히스토리를 Session State에 저장
+# 📌 세션 상태 초기화
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = StreamlitChatMessageHistory()
-if "prev_messages_count" not in st.session_state:
-    st.session_state.prev_messages_count = 0
+if "last_message_index" not in st.session_state:
+    st.session_state.last_message_index = 0  # 마지막으로 출력된 메시지 인덱스
 
 # 📌 Agent 생성 함수
 def create_agent_chain(history):
@@ -61,9 +61,9 @@ def create_agent_chain(history):
 st.title("🚀 AWS EC2 + LangChain Agent Chatbot")
 st.write("LangChain Agents를 활용한 Streamlit 챗봇입니다. 🎉")
 
-# 💬 이전 대화 히스토리 출력 (현재 입력 전까지만 표시)
+# 💬 이전 대화 히스토리 출력 (마지막 입력 이후만 출력)
 st.subheader("💬 이전 대화 히스토리")
-for message in st.session_state.chat_history.messages[:st.session_state.prev_messages_count]:
+for message in st.session_state.chat_history.messages[st.session_state.last_message_index:]:
     if isinstance(message, HumanMessage):
         with st.chat_message("user"):
             st.markdown(message.content)
@@ -75,7 +75,7 @@ for message in st.session_state.chat_history.messages[:st.session_state.prev_mes
 prompt = st.chat_input("What's up?")
 
 if prompt:
-    # 🗨️ 사용자 메시지 즉시 표시
+    # 🗨️ 사용자 메시지 즉시 출력
     with st.chat_message("user"):
         st.markdown(prompt)
 
@@ -88,24 +88,15 @@ if prompt:
             response = agent_chain.invoke({"input": prompt})
             output = response.get("output", "No response generated.")
 
-            # 📝 Session State 히스토리 업데이트
+            # 💾 메시지 기록은 화면 출력 후 업데이트 (중복 방지)
             st.session_state.chat_history.add_user_message(prompt)
             st.session_state.chat_history.add_ai_message(output)
 
             # AI 응답 즉시 표시
             st.markdown(output)
 
-            # 💾 이전 대화 히스토리 카운트 업데이트
-            st.session_state.prev_messages_count = len(st.session_state.chat_history.messages)
+            # 🟡 마지막 출력된 메시지 인덱스 업데이트
+            st.session_state.last_message_index = len(st.session_state.chat_history.messages)
 
         except Exception as e:
             st.error(f"오류 발생: {e}")
-
-# 🔄 📝 전체 대화 히스토리 즉시 업데이트
-st.divider()
-st.subheader("📝 전체 대화 내역")
-for message in st.session_state.chat_history.messages:
-    if isinstance(message, HumanMessage):
-        st.markdown(f"👤 **사용자:** {message.content}")
-    elif isinstance(message, AIMessage):
-        st.markdown(f"🤖 **AI:** {message.content}")
