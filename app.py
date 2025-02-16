@@ -1,46 +1,75 @@
-# app.py - Streamlit + LangChain 예제
+# app.py - Streamlit + LangChain 예제 with Agent
 import os
-
 import streamlit as st
 from dotenv import load_dotenv
 from langchain_community.chat_message_histories import StreamlitChatMessageHistory
 from langchain_openai import ChatOpenAI
 from langchain.schema import HumanMessage
 
+# Agent 관련 모듈
+from langchain import hub
+from langchain.agents import AgentExecutor, create_openai_tools_agent, load_tools
+from langchain_community.callbacks import StreamlitCallbackHandler
+
+# 📌 환경 변수 로드
 load_dotenv()
 
-# 제목 및 설명
-st.title("🚀 Hello, AWS EC2 from Streamlit with LangChain!")
-st.write("AWS EC2에서 Streamlit과 LangChain을 이용한 AI 챗봇입니다. 🎉")
+# 📌 Agent 생성 함수
+def create_agent_chain():
+    chat = ChatOpenAI(
+        model_name=os.getenv("OPENAI_API_MODEL", "gpt-3.5-turbo"),
+        temperature=float(os.getenv("OPENAI_API_TEMPERATURE", 0.5)),
+        max_tokens=500
+    )
+    
+    # 🔧 도구 로드
+    tools = load_tools(["ddg-search", "wikipedia"])
+    
+    # 🔧 프롬프트 로드
+    prompt = hub.pull("hwchase17/openai-tools-agent")
+    
+    # 🛠️ Agent 생성
+    agent = create_openai_tools_agent(chat, tools, prompt)
+    
+    # 🚀 Agent Executor 생성
+    return AgentExecutor.from_agent_and_tools(
+        agent=agent, 
+        tools=tools,
+        verbose=True
+    )
 
-# Chat History 초기화
+# 📌 Streamlit 제목 및 설명
+st.title("🚀 AWS EC2 + LangChain Agent Chatbot")
+st.write("LangChain Agents를 활용한 Streamlit 챗봇입니다. 🎉")
+
+# 📌 Chat History 초기화
 history = StreamlitChatMessageHistory()
 
-# 이전 메시지 출력
+# 🔁 이전 메시지 표시
 for message in history.messages:
     with st.chat_message(message.type):
         st.markdown(message.content)
 
-# Chat Input & Chat Message 사용
+# 🟡 사용자 입력 처리
 prompt = st.chat_input("What's up?")
 
 if prompt:
-    # 사용자 메시지 출력
+    # 🗨️ 사용자 메시지 출력
     with st.chat_message("user"):
         history.add_user_message(prompt)
         st.markdown(prompt)
 
-    # AI 응답 출력
+    # 🤖 AI 응답 출력
     with st.chat_message("assistant"):
-        chat = ChatOpenAI(
-            model_name=os.getenv("OPENAI_API_MODEL"),
-            temperature=float(os.getenv("OPENAI_API_TEMPERATURE", 0.5)),
-            max_tokens=500
-        )
-        messages = [HumanMessage(content=prompt)]
+        callback = StreamlitCallbackHandler(st.container())  # 콜백 핸들러 추가
+        agent_chain = create_agent_chain()
 
-        response = chat.invoke(messages)  # AIMessage 객체 반환
-        response_content = response.content  # 문자열로 변환
-
-        history.add_ai_message(response_content)  # 문자열만 저장
-        st.markdown(response.content)  # 화면에 표시
+        try:
+            response = agent_chain.invoke(
+                {"input": prompt, "callbacks": [callback]}
+            )
+            output = response.get("output", "No response generated.")
+            history.add_ai_message(output)
+            st.markdown(output)
+        except Exception as e:
+            st.error(f"오류 발생: {e}")
