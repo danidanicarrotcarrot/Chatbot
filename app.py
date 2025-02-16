@@ -48,16 +48,21 @@ def create_agent_chain(history):
         tools=tools,
         memory=memory,
         verbose=True,
+<<<<<<< HEAD
         return_intermediate_steps=False
+=======
+return_intermediate_steps=False # 중간 단계 출력 방
+>>>>>>> baf1ebe (update)
     )
 
-# 📌 Streamlit 제목 및 설명
+# 📌 Streamlit 제목 및 설명지
 st.title("🚀 AWS EC2 + LangChain Agent Chatbot")
 st.write("LangChain Agents를 활용한 Streamlit 챗봇입니다. 🎉")
 
 # 📌 Chat History 초기화
 history = StreamlitChatMessageHistory()
 
+<<<<<<< HEAD
 # 📝 🔁 대화 히스토리 전체 출력 (Streamlit UI)
 st.subheader("💬 대화 히스토리")
 for message in history.messages:
@@ -66,6 +71,12 @@ for message in history.messages:
     elif message.type == "assistant":
         st.markdown(f"🤖 **AI:** {message.content}")
 st.divider()  # 구분선 추가
+=======
+# 🔁 이전 메시지 표시
+for message in history.messages:
+    with st.chat_message(message.type):
+            st.markdown(message.content)
+>>>>>>> baf1ebe (update)
 
 # 🟡 사용자 입력 처리
 prompt = st.chat_input("What's up?")
