@@ -33,10 +33,13 @@ if prompt:
     # AI 응답 출력
     with st.chat_message("assistant"):
         chat = ChatOpenAI(
-            model_name=os.environ["OPENAI_API_MODEL"],
-            temperature=os.environ["OPENAI_API_TEMPERATURE"],
+            model_name=os.getenv("OPENAI_API_MODEL"),
+            temperature=float(os.getenv("OPENAI_API_TEMPERATURE", 0.5)),
         )
         messages = [HumanMessage(content=prompt)]
-        response = chat.invoke(messages)
-        history.add_ai_message(response)
-        st.markdown(response.content)
+
+        response = chat.invoke(messages)  # AIMessage 객체 반환
+        response_content = response.content  # 문자열로 변환
+
+        history.add_ai_message(response_content)  # 문자열만 저장
+        st.markdown(response.content)  # 화면에 표시
