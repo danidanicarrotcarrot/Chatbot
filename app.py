@@ -2,7 +2,6 @@
 import os
 import streamlit as st
 from dotenv import load_dotenv
-from langchain_community.chat_message_histories import StreamlitChatMessageHistory
 from langchain_openai import ChatOpenAI
 from langchain.schema import HumanMessage, AIMessage
 
@@ -10,19 +9,17 @@ from langchain.schema import HumanMessage, AIMessage
 from langchain import hub
 from langchain.agents import AgentExecutor, create_openai_tools_agent, load_tools
 from langchain_community.callbacks import StreamlitCallbackHandler
-
-# Memory 관련 모듈
 from langchain.memory import ConversationBufferMemory
 
 # 📌 환경 변수 로드
 load_dotenv()
 
-# 📌 Session State에 대화 히스토리 유지
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = StreamlitChatMessageHistory()
+# 📌 대화 히스토리를 Session State에 유지
+if "messages" not in st.session_state:
+    st.session_state.messages = []  # 대화 히스토리 리스트 초기화
 
 # 📌 Agent 생성 함수
-def create_agent_chain(history):
+def create_agent_chain():
     chat = ChatOpenAI(
         model_name=os.getenv("OPENAI_API_MODEL", "gpt-3.5-turbo"),
         temperature=float(os.getenv("OPENAI_API_TEMPERATURE", 0.5)),
@@ -37,7 +34,6 @@ def create_agent_chain(history):
 
     # 📝 ConversationBufferMemory 초기화
     memory = ConversationBufferMemory(
-        chat_memory=history,
         memory_key='chat_history',
         return_messages=True
     )
@@ -57,39 +53,38 @@ def create_agent_chain(history):
 st.title("🚀 AWS EC2 + LangChain Agent Chatbot")
 st.write("LangChain Agents를 활용한 Streamlit 챗봇입니다. 🎉")
 
-# 💬 전체 대화 히스토리 출력
-for message in st.session_state.chat_history.messages:
-    if isinstance(message, HumanMessage):
+# 💬 대화 히스토리 출력 (세션 기반)
+for message in st.session_state.messages:
+    if message["type"] == "user":
         with st.chat_message("user"):
-            st.markdown(message.content)
-    elif isinstance(message, AIMessage):
+            st.markdown(message["content"])
+    elif message["type"] == "assistant":
         with st.chat_message("assistant"):
-            st.markdown(message.content)
+            st.markdown(message["content"])
 
 # 🟡 사용자 입력 처리
 prompt = st.chat_input("What's up?")
 
 if prompt:
-    # 🗨️ 사용자 메시지 즉시 출력 (화면에만 표시)
+    # 🗨️ 사용자 메시지 즉시 화면 출력
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # 💾 히스토리에 사용자 메시지 추가
-    st.session_state.chat_history.add_user_message(prompt)
+    # 💾 세션 히스토리에 사용자 메시지 추가
+    st.session_state.messages.append({"type": "user", "content": prompt})
 
-    # 🤖 AI 응답 생성 및 출력 (화면에만 표시)
+    # 🤖 AI 응답 생성 및 즉시 출력
     with st.chat_message("assistant"):
-        callback = StreamlitCallbackHandler(st.container())  # 콜백 핸들러 추가
-        agent_chain = create_agent_chain(st.session_state.chat_history)
+        agent_chain = create_agent_chain()
 
         try:
             response = agent_chain.invoke({"input": prompt})
             output = response.get("output", "No response generated.")
 
-            # 💾 히스토리에 AI 메시지 추가
-            st.session_state.chat_history.add_ai_message(output)
+            # 💾 세션 히스토리에 AI 메시지 추가
+            st.session_state.messages.append({"type": "assistant", "content": output})
 
-            # AI 응답 즉시 화면 출력
+            # AI 응답 즉시 출력
             st.markdown(output)
 
         except Exception as e:
