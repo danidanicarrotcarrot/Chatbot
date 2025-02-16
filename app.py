@@ -1,4 +1,4 @@
-# app.py - Streamlit + LangChain 예제 with Chat History 표시 (수정됨)
+# app.py - Streamlit + LangChain 예제 (중복 출력 해결)
 import os
 import streamlit as st
 from dotenv import load_dotenv
@@ -20,6 +20,8 @@ load_dotenv()
 # 📌 대화 히스토리를 Session State에 저장
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = StreamlitChatMessageHistory()
+if "prev_messages_count" not in st.session_state:
+    st.session_state.prev_messages_count = 0
 
 # 📌 Agent 생성 함수
 def create_agent_chain(history):
@@ -59,9 +61,9 @@ def create_agent_chain(history):
 st.title("🚀 AWS EC2 + LangChain Agent Chatbot")
 st.write("LangChain Agents를 활용한 Streamlit 챗봇입니다. 🎉")
 
-# 💬 이전 대화 히스토리 출력
+# 💬 이전 대화 히스토리 출력 (현재 입력 전까지만 표시)
 st.subheader("💬 이전 대화 히스토리")
-for message in st.session_state.chat_history.messages[:-1]:  # 마지막 메시지 제외
+for message in st.session_state.chat_history.messages[:st.session_state.prev_messages_count]:
     if isinstance(message, HumanMessage):
         with st.chat_message("user"):
             st.markdown(message.content)
@@ -92,6 +94,9 @@ if prompt:
 
             # AI 응답 즉시 표시
             st.markdown(output)
+
+            # 💾 이전 대화 히스토리 카운트 업데이트
+            st.session_state.prev_messages_count = len(st.session_state.chat_history.messages)
 
         except Exception as e:
             st.error(f"오류 발생: {e}")
