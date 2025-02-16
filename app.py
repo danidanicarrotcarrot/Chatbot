@@ -35,6 +35,7 @@ if prompt:
         chat = ChatOpenAI(
             model_name=os.getenv("OPENAI_API_MODEL"),
             temperature=float(os.getenv("OPENAI_API_TEMPERATURE", 0.5)),
+            max_tokens=500
         )
         messages = [HumanMessage(content=prompt)]
 
