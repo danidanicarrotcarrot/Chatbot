@@ -1,4 +1,6 @@
 # app.py - Streamlit + LangChain 예제
+import os
+
 import streamlit as st
 from dotenv import load_dotenv
 from langchain_community.chat_message_histories import StreamlitChatMessageHistory
