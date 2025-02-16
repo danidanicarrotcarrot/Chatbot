@@ -1,10 +1,10 @@
-# app.py - Streamlit + LangChain 예제 with Chat History 업데이트
+# app.py - Streamlit + LangChain 예제 with Chat History 표시 (수정됨)
 import os
 import streamlit as st
 from dotenv import load_dotenv
 from langchain_community.chat_message_histories import StreamlitChatMessageHistory
 from langchain_openai import ChatOpenAI
-from langchain.schema import HumanMessage
+from langchain.schema import HumanMessage, AIMessage
 
 # Agent 관련 모듈
 from langchain import hub
@@ -59,13 +59,13 @@ def create_agent_chain(history):
 st.title("🚀 AWS EC2 + LangChain Agent Chatbot")
 st.write("LangChain Agents를 활용한 Streamlit 챗봇입니다. 🎉")
 
-# 📝 💬 이전 대화 히스토리 출력 (마지막 입력 제외)
+# 💬 이전 대화 히스토리 출력
 st.subheader("💬 이전 대화 히스토리")
-for message in st.session_state.chat_history.messages[:-1]:  # 마지막 입력 제외
-    if message.type == "user":
+for message in st.session_state.chat_history.messages[:-1]:  # 마지막 메시지 제외
+    if isinstance(message, HumanMessage):
         with st.chat_message("user"):
             st.markdown(message.content)
-    elif message.type == "assistant":
+    elif isinstance(message, AIMessage):
         with st.chat_message("assistant"):
             st.markdown(message.content)
 
@@ -100,7 +100,7 @@ if prompt:
 st.divider()
 st.subheader("📝 전체 대화 내역")
 for message in st.session_state.chat_history.messages:
-    if message.type == "user":
+    if isinstance(message, HumanMessage):
         st.markdown(f"👤 **사용자:** {message.content}")
-    elif message.type == "assistant":
+    elif isinstance(message, AIMessage):
         st.markdown(f"🤖 **AI:** {message.content}")
