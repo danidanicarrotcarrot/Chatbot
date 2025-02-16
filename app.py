@@ -58,14 +58,10 @@ st.write("LangChain Agents를 활용한 Streamlit 챗봇입니다. 🎉")
 # 📌 Chat History 초기화
 history = StreamlitChatMessageHistory()
 
-# 📝 🔁 대화 히스토리 전체 출력 (Streamlit UI)
-st.subheader("💬 대화 히스토리")
+# 🔁 이전 메시지 표시
 for message in history.messages:
-    if message.type == "user":
-        st.markdown(f"👤 **사용자:** {message.content}")
-    elif message.type == "assistant":
-        st.markdown(f"🤖 **AI:** {message.content}")
-st.divider()  # 구분선 추가
+    with st.chat_message(message.type):
+        st.markdown(message.content)
 
 # 🟡 사용자 입력 처리
 prompt = st.chat_input("What's up?")
@@ -81,22 +77,9 @@ if prompt:
         callback = StreamlitCallbackHandler(st.container())  # 콜백 핸들러 추가
         agent_chain = create_agent_chain(history)
 
-        try:
-            response = agent_chain.invoke({"input": prompt})
-            output = response.get("output", "No response generated.")
+        response = agent_chain.invoke({"input": prompt})
+        output = response.get("output", "No response generated.")
 
-            # 대화 기록에 추가
-            history.add_ai_message(output)
-            st.markdown(output)
-
-            # 🔄 대화 히스토리 즉시 업데이트
-            st.subheader("💬 업데이트된 대화 히스토리")
-            for message in history.messages:
-                if message.type == "user":
-                    st.markdown(f"👤 **사용자:** {message.content}")
-                elif message.type == "assistant":
-                    st.markdown(f"🤖 **AI:** {message.content}")
-            st.divider()
-
-        except Exception as e:
-            st.error(f"오류 발생: {e}")
+        # 대화 기록에 추가
+        history.add_ai_message(output)
+        st.markdown(output)
