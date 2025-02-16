@@ -1,4 +1,4 @@
-# app.py - Streamlit + LangChain 예제 with Agent
+# app.py - Streamlit + LangChain 예제 with Agent (중복 출력 해결)
 import os
 import streamlit as st
 from dotenv import load_dotenv
@@ -31,10 +31,13 @@ def create_agent_chain(history):
     # 🔧 프롬프트 로드
     prompt = hub.pull("hwchase17/openai-tools-agent")
 
-    # OpenAI Functions Agent가 사용할 수 있는 설정으로 Memory 초기화
+    # 📌 ConversationBufferMemory (Output 제외 설정)
     memory = ConversationBufferMemory(
-        chat_memory=history, memory_key='chat_history', return_messages=True
-        )
+        chat_memory=history,
+        memory_key='chat_history',
+        return_messages=True,
+        output_key=None  # 출력 중복 방지
+    )
 
     # 🛠️ Agent 생성
     agent = create_openai_tools_agent(chat, tools, prompt)
@@ -44,7 +47,8 @@ def create_agent_chain(history):
         agent=agent,
         tools=tools,
         memory=memory,
-        verbose=True
+        verbose=True,
+        return_intermediate_steps=False  # 중간 단계 출력 방지
     )
 
 # 📌 Streamlit 제목 및 설명
@@ -54,10 +58,14 @@ st.write("LangChain Agents를 활용한 Streamlit 챗봇입니다. 🎉")
 # 📌 Chat History 초기화
 history = StreamlitChatMessageHistory()
 
-# 🔁 이전 메시지 표시
+# 🔁 이전 메시지 표시 (Streamlit만 출력)
 for message in history.messages:
-    with st.chat_message(message.type):
-        st.markdown(message.content)
+    if message.type == "user":
+        with st.chat_message("user"):
+            st.markdown(message.content)
+    elif message.type == "assistant":
+        with st.chat_message("assistant"):
+            st.markdown(message.content)
 
 # 🟡 사용자 입력 처리
 prompt = st.chat_input("What's up?")
@@ -76,6 +84,8 @@ if prompt:
         try:
             response = agent_chain.invoke({"input": prompt})
             output = response.get("output", "No response generated.")
+            
+            # Streamlit에만 출력
             history.add_ai_message(output)
             st.markdown(output)
         except Exception as e:
