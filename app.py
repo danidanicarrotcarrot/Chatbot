@@ -1,10 +1,10 @@
-# app.py - Streamlit + LangChain 예제 (중복 출력 해결 및 전체 대화 출력)
+# app.py - Streamlit + LangChain 예제 with Agent
 import os
 import streamlit as st
 from dotenv import load_dotenv
 from langchain_community.chat_message_histories import StreamlitChatMessageHistory
 from langchain_openai import ChatOpenAI
-from langchain.schema import HumanMessage, AIMessage
+from langchain.schema import HumanMessage
 
 # Agent 관련 모듈
 from langchain import hub
@@ -17,11 +17,7 @@ from langchain.memory import ConversationBufferMemory
 # 📌 환경 변수 로드
 load_dotenv()
 
-# 📌 세션 상태 초기화
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = StreamlitChatMessageHistory()
-
-# 📌 Agent 생성 함수
+# 📌 Agent 생성 함수 수정
 def create_agent_chain(history):
     chat = ChatOpenAI(
         model_name=os.getenv("OPENAI_API_MODEL", "gpt-3.5-turbo"),
@@ -35,13 +31,10 @@ def create_agent_chain(history):
     # 🔧 프롬프트 로드
     prompt = hub.pull("hwchase17/openai-tools-agent")
 
-    # 📝 ConversationBufferMemory 초기화
+    # OpenAI Functions Agent가 사용할 수 있는 설정으로 Memory 초기화
     memory = ConversationBufferMemory(
-        chat_memory=history,
-        memory_key='chat_history',
-        return_messages=True,
-        output_key=None
-    )
+        chat_memory=history, memory_key='chat_history', return_messages=True
+        )
 
     # 🛠️ Agent 생성
     agent = create_openai_tools_agent(chat, tools, prompt)
@@ -51,8 +44,7 @@ def create_agent_chain(history):
         agent=agent,
         tools=tools,
         memory=memory,
-        verbose=True,
-        return_intermediate_steps=False
+        verbose=True
     )
 
 # 📌 Streamlit 제목 및 설명
@@ -71,25 +63,20 @@ for message in history.messages:
 prompt = st.chat_input("What's up?")
 
 if prompt:
-    # 🗨️ 사용자 메시지 즉시 출력 (화면에만 표시)
+    # 🗨️ 사용자 메시지 출력
     with st.chat_message("user"):
+        history.add_user_message(prompt)
         st.markdown(prompt)
 
-    # 🤖 AI 응답 생성 및 출력 (화면에만 표시)
+    # 🤖 AI 응답 출력
     with st.chat_message("assistant"):
         callback = StreamlitCallbackHandler(st.container())  # 콜백 핸들러 추가
-        agent_chain = create_agent_chain(st.session_state.chat_history)
+        agent_chain = create_agent_chain(history)
 
         try:
             response = agent_chain.invoke({"input": prompt})
             output = response.get("output", "No response generated.")
-
-            # 💾 대화 히스토리 업데이트 (세션에만 저장, 중복 방지)
-            st.session_state.chat_history.add_user_message(prompt)
-            st.session_state.chat_history.add_ai_message(output)
-
-            # AI 응답 즉시 표시
+            history.add_ai_message(output)
             st.markdown(output)
-
         except Exception as e:
             st.error(f"오류 발생: {e}")
