@@ -63,10 +63,10 @@ st.write("LangChain Agents를 활용한 Streamlit 챗봇입니다. 🎉")
 st.subheader("💬 이전 대화 히스토리")
 for message in st.session_state.chat_history.messages[:-1]:  # 마지막 메시지 제외
     if isinstance(message, HumanMessage):
-        # with st.chat_message("user"):
+        with st.chat_message("user"):
         st.markdown(message.content)
     elif isinstance(message, AIMessage):
-        # with st.chat_message("assistant"):
+        with st.chat_message("assistant"):
         st.markdown(message.content)
 
 # 🟡 사용자 입력 처리
