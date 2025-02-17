@@ -50,8 +50,8 @@ def create_agent_chain():
     )
 
 # 📌 Streamlit 제목 및 설명
-st.title("🚀 AWS EC2 + LangChain Agent Chatbot")
-st.write("LangChain Agents를 활용한 Streamlit 챗봇입니다. 🎉")
+st.title("🚀 Dani's Chatbot")
+st.write("AWS EC2 + LangChain Agents를 활용한 Streamlit 챗봇입니다. 🎉")
 
 # 💬 대화 히스토리 출력 (세션 기반)
 for message in st.session_state.messages:
