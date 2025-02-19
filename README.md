@@ -15,3 +15,6 @@ OpenAI의 **GPT-4**모델을 활용하여 대화형 AI 챗봇을 제공하는 St
 - **Streamlit UI 기반 실시간 챗봇**  
 - **대화 히스토리 유지 (`session_state`)**  
 - **Wikipedia 및 DuckDuckGo 검색 기능 내장**
+
+## 📌 **Preview**  
+![image](https://github.com/user-attachments/assets/ad159d1d-59f5-400e-ae2f-0668c94f9034)
