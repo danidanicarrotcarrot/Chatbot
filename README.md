@@ -9,7 +9,7 @@ AWS EC2 환경에서 Streamlit을 활용해 제작되었습니다. **GPT-4** 모
 
 
 ## 📌 **프로젝트 개요**  
-OpenAI의 **GPT-4**모델을 활용하여 대화형 AI 챗봇을 제공하는 Streamlit 애플리케이션을 구현하는 프로젝트입니다.
+OpenAI의 **GPT-4**모델을 활용, 실시간 응답을 제공하는 Streamlit UI 기반 AI 챗봇 구현 프로젝트입니다.
 - **AWS EC2 환경 활성화**
 - **LangChain Agents 활용**  
 - **Streamlit UI 기반 실시간 챗봇**  
